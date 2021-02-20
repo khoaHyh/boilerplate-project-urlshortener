@@ -31,9 +31,9 @@ app.get('/', (req, res) => {
 
 app.post('/api/shorturl/new', (req, res) => {
 	let original = req.body.url;
-	dns.lookup(original, (err, add, fam) => {
+	dns.lookup(original, (err, address, family) => {
 		if (err) return console.error(`dns lookup error: ${err}`);
-		console.log(`add: ${add}, fam: ${fam}`);
+		console.log(`address: ${address}, family: ${family}`);
 	});
   	res.status(200).json({ original_url: original, short_url: req.body.url  });
 });
