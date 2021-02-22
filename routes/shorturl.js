@@ -4,15 +4,17 @@ const Url = require('../url');
 
 let shortUrlRoute = express.Router();
 
-shortUrlRoute.post('/', async (req, res) => {
+shortUrlRoute.post('/api/shorturl/new', async (req, res) => {
 	const ogUrl = req.body.url;
     const baseUrl = 'http://localhost:3000/api/shorturl';
 
-    dns.lookup(baseUrl, (err, address, family => {
+    dns.lookup(baseUrl, (err, address, family) => {
         if (err) return res.status(401).json(`baseUrl error: ${err}`);
-    }
+    });
 
-    dns.lookup(ogUrl, (err, address, family) => {
+    let urlCode = nanoid();
+
+    dns.lookup(ogUrl, async (err, address, family) => {
         if (err) return res.status(401).json(`ogUrl error: ${err}`);
         try {
             let url = await Url.findOne({ ogUrl : ogUrl });
@@ -27,13 +29,15 @@ shortUrlRoute.post('/', async (req, res) => {
                     urlCode,
                 });
                 
-                await url.save()
+                await url.save();
                 return res.status(201).json(url);
             }
         } catch (err) {
             console.error(err.message);
-            return res.status(500).json("Internal Server error " + err.message);
+            return res.status(500).json(`Internal Server error ${err.message}`);
         }
     });
 
 });
+
+module.exports = shortUrlRoute;
