@@ -55,6 +55,11 @@ app.post('/api/shorturl/new', (req, res) => {
     let originalUrl = req.body.url;
 
     dns.lookup(originalUrl, async (err, address, family) => {
+        if (err) {
+            console.error(`DNS lookup error: ${err}`);
+            return res.status(404).json({ error: 'invalid url' });
+        }
+
         let url = await Url.findOne({ original_url: originalUrl });
         if (url) {
             showJson(res, 200, url.original_url, url.short_url);
