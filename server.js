@@ -52,32 +52,47 @@ const showJson = (res, code, orig, short) => {
 // Return a json object based on whether or not the submitted url exists already
 // in the database
 app.post('/api/shorturl/new', (req, res) => {
+    let regex = /^https?:\/\//;
     let originalUrl = req.body.url;
+    
+    // Ensure url follows http://example.com format
+    if (regex.test(originalUrl)) {
+        // https://forum.freecodecamp.org/t/help-with-node-js-dns-lookup/311144
+        // need to remove http(s):// to pass to dns.lookup
+        let tempDnsUrl = originalUrl.slice(originalUrl.indexOf("//") + 2); 
+        // need to remove anythng past .com, etc., for dns.lookup
+        let slashIndex = tempDnsUrl.indexOf("/"); 
+        let dnsUrl = slashIndex < 0 ? tempDnsUrl : tempDnsUrl.slice(0, slashIndex);
+        // Ensure the url is a valid one
+        dns.lookup(dnsUrl, async (err, address, family) => {
+            if (err) {
+                console.error(`DNS lookup error: ${err}`);
+                return res.status(404).json({ error: 'invalid url' });
+            }
 
-    dns.lookup(originalUrl, async (err, address, family) => {
-        if (err) {
-            console.error(`DNS lookup error: ${err}`);
-            return res.status(404).json({ error: 'invalid url' });
-        }
+            // Check if the url is already in the database
+            let url = await Url.findOne({ original_url: originalUrl });
+            if (url) {
+                showJson(res, 200, url.original_url, url.short_url);
+            } else {
+                let urlId = nanoid();
 
-        let url = await Url.findOne({ original_url: originalUrl });
-        if (url) {
-            showJson(res, 200, url.original_url, url.short_url);
-        } else {
-            let urlId = nanoid();
+                url = new Url({
+                    original_url: originalUrl,
+                    short_url: urlId
+                });
 
-            url = new Url({
-                original_url: originalUrl,
-                short_url: urlId
-            });
-
-            url.save((err, doc) => {
-                if (err) return console.error(`save error: ${err}`);
-                console.log("Document inserted successfully");
-                showJson(res, 201, url.original_url, url.short_url);
-            });
-        }
-    });
+                url.save((err, doc) => {
+                    if (err) return console.error(`save error: ${err}`);
+                    console.log("Document inserted successfully");
+                    showJson(res, 201, url.original_url, url.short_url);
+                });
+            }
+        });
+    } else {
+        console.error(`${originalUrl} does not have the valid http://example.com format`);
+        res.status(404).json({ error: 'invalid url' });
+    }
 });
 
 app.get('/api/shorturl/:urlId', async (req, res) => {
