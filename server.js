@@ -48,19 +48,19 @@ app.post('/api/shorturl/new', (req, res) => {
     let urlId = nanoid();
 
     dns.lookup(originalUrl, async (err, address, family) => {
-        let url = new Url({
-            original_url: originalUrl,
-            short_url: urlId
-        });
-        
-        url.save((err, doc) => {
-            if (err) return console.error(`save error: ${err}`);
-            console.log("Document inserted successfully");
-            res.status(201).json({
-                original_url: url.original_url,
-                short_url: url.short_url
+        let url = await Url.findOne({ original_url: originalUrl });
+        if (url) {
+            res.status(200).json(url);
+        } else {
+            url.save((err, doc) => {
+                if (err) return console.error(`save error: ${err}`);
+                console.log("Document inserted successfully");
+                res.status(201).json({
+                    original_url: url.original_url,
+                    short_url: url.short_url
+                });
             });
-        });
+        }
     });
 });
 
@@ -68,8 +68,7 @@ app.get('/api/shorturl/:urlId', async (req, res) => {
     let inputId = req.params.urlId;
     let url = await Url.find({ short_url: inputId }); 
     if (url) {
-        console.log(url); 
-        res.redirect(url.original_url);
+        res.redirect(url[0].original_url);
     } else {
         console.error(`else: ${url}`);
     }
