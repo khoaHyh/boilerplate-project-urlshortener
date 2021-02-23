@@ -57,7 +57,7 @@ app.post('/api/shorturl/new', (req, res) => {
                     short_url: urlId
                 });
                 
-                await url.save((err, doc) => {
+                url.save((err, doc) => {
                     if (err) return console.error(`save error: ${err}`);
                     console.log("Document inserted successfully");
                     res.status(201).json({
