@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const dns = require('dns');
 const app = express();
 const bodyParser = require('body-parser');
 const connectDB = require('./db');
@@ -27,6 +28,8 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 
+const TIMEOUT = 10000;
+
 app.use('/public', express.static(`${process.cwd()}/public`));
 
 app.get('/', (req, res) => {
@@ -45,32 +48,31 @@ app.post('/api/shorturl/new', (req, res) => {
     let urlId = nanoid();
 
     dns.lookup(originalUrl, async (err, address, family) => {
-        if (err) return res.status(401).json(`dns lookup error: ${err}`);
-
-        try {
-            let url = await Url.findOne({ original_url: originalUrl });
-            if (url) {
-                return res.status(200).json({ original_url: originalUrl, short_url: urlId });
-            } else {
-                url = new Url({
-                    original_url: originalUrl,
-                    short_url: urlId
-                });
-                
-                url.save((err, doc) => {
-                    if (err) return console.error(`save error: ${err}`);
-                    console.log("Document inserted successfully");
-                    res.status(201).json({
-                        original_url: url.original_url,
-                        short_url: url.short_url
-                    });
-                });
-            }
-        } catch (err) {
-            console.error(err.message);
-            return res.status(500).json(`Internal Server error ${err.message}`);
-        }
+        let url = new Url({
+            original_url: originalUrl,
+            short_url: urlId
+        });
+        
+        url.save((err, doc) => {
+            if (err) return console.error(`save error: ${err}`);
+            console.log("Document inserted successfully");
+            res.status(201).json({
+                original_url: url.original_url,
+                short_url: url.short_url
+            });
+        });
     });
+});
+
+app.get('/api/shorturl/:urlId', async (req, res) => {
+    let inputId = req.params.urlId;
+    let url = await Url.find({ short_url: inputId }); 
+    if (url) {
+        console.log(url); 
+        res.redirect(url.original_url);
+    } else {
+        console.error(`else: ${url}`);
+    }
 });
 
 app.listen(port, () => {
