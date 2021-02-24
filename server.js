@@ -92,7 +92,7 @@ app.post('/api/shorturl/new', (req, res) => {
         });
     } else {
         console.error(`${originalUrl} does not have the valid 'http://example.com format'`);
-        return res.status(404).json({ error: 'invalid url' });
+        return res.json({ error: 'invalid url' });
     }
 });
 
