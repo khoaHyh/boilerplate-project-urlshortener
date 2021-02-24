@@ -73,6 +73,7 @@ app.post('/api/shorturl/new', (req, res) => {
             // Check if the url is already in the database
             let url = await Url.findOne({ original_url: originalUrl });
             if (url) {
+                console.log(url.original_url);
                 showJson(res, 200, url.original_url, url.short_url);
             } else {
                 let urlId = nanoid();
@@ -100,6 +101,7 @@ app.get('/api/shorturl/:urlId', async (req, res) => {
     console.log(`inputId: ${inputId}`);
     let url = await Url.findOne({ short_url: inputId }); 
     if (url) {
+        console.log(`redirect: ${url.original_url}`);
         res.redirect(url.original_url);
     } else {
         return console.error(`GET request error, else: ${url}`);
