@@ -52,7 +52,7 @@ const showJson = (res, code, orig, short) => {
 // Return a json object based on whether or not the submitted url exists already
 // in the database
 app.post('/api/shorturl/new', (req, res) => {
-    let regex = /^https?:\/\//;
+    let regex = /^https?:///;
     let originalUrl = req.body.url;
     
     // Ensure url follows http://example.com format
@@ -90,8 +90,8 @@ app.post('/api/shorturl/new', (req, res) => {
             }
         });
     } else {
-        console.error(`${originalUrl} does not have the valid http://example.com format`);
-        res.status(404).json({ error: 'invalid url' });
+        console.error(`${originalUrl} does not have the valid 'http://example.com format'`);
+        return res.status(404).json({ error: 'invalid url' });
     }
 });
 
@@ -100,7 +100,6 @@ app.get('/api/shorturl/:urlId', async (req, res) => {
     console.log(`inputId: ${inputId}`);
     let url = await Url.findOne({ short_url: inputId }); 
     if (url) {
-        console.log(`GET request error, if: ${url.original_url}`);
         res.redirect(url.original_url);
     } else {
         return console.error(`GET request error, else: ${url}`);
